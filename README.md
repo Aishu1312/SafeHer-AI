@@ -10,7 +10,7 @@ St. Vincent Pallotti College of Engineering and Technology
 
 ### 📅 Date:
 
-August 2026
+June 2026
 
 ---
 
