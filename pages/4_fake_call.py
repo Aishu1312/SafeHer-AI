@@ -51,8 +51,9 @@ with col2:
         else:
             # Simulate Incoming Call UI
             caller = st.session_state.get('fake_call_caller', 'Mom')
-            st.markdown(f"""
-            <div style="background-color: #1c1c1e; border-radius: 30px; padding: 40px 20px; text-align: center; border: 2px solid #333; max-width: 350px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            import streamlit.components.v1 as components
+            components.html(f"""
+            <div style="background-color: #1c1c1e; border-radius: 30px; padding: 40px 20px; text-align: center; border: 2px solid #333; max-width: 350px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-family: sans-serif;">
                 <h4 style="color: #aaa; margin: 0; font-weight: normal;">Incoming call...</h4>
                 <div style="width: 80px; height: 80px; background-color: #555; border-radius: 50%; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 40px;">
                     👤
@@ -78,7 +79,7 @@ with col2:
                 <!-- Hidden Audio Element -->
                 <audio id="fake-audio" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
             </div>
-            """, unsafe_allow_html=True)
+            """, height=450)
             
             if st.button("Reset Call"):
                 st.session_state.fake_call_triggered = False
