@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\Aishwarya Lala\Downloads\SafeHer-AI\scripts\generate_translations.py", line 4, in <module>
+    from deep_translator import GoogleTranslator
+ModuleNotFoundError: No module named 'deep_translator'

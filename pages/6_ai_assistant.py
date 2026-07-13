@@ -1,7 +1,7 @@
 import streamlit as st
 from styles.css import inject_custom_css
-from utils.i18n import _
-import google.generativeai as genai
+from localization.manager import _
+from services.ai_service import AIService
 
 st.set_page_config(page_title=_("AI Assistant") + " - SafeHer AI", page_icon="🤖", layout="wide")
 inject_custom_css()
@@ -13,18 +13,27 @@ st.markdown("---")
 # Use global selected language
 selected_lang = st.session_state.get('language', 'English')
 
-# Configure Gemini
-api_key = st.secrets.get("GEMINI_API_KEY", "")
-if not api_key:
-    st.error(_("⚠️ GEMINI_API_KEY not found in Streamlit secrets. Please add it to enable the AI Assistant."))
-    st.stop()
+# Initialize AI Service
+@st.cache_resource
+def get_ai_service():
+    return AIService()
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-pro")
+ai_service = get_ai_service()
+
+# Graceful degradation if API key is missing
+if not ai_service.is_available:
+    st.markdown(f"""
+    <div class="glass-card" style="border-left: 5px solid #FF9800; padding: 20px;">
+        <h3 style="color: #FF9800; margin-top: 0;">⚠️ {_('AI Assistant Unavailable')}</h3>
+        <p>{_('The AI Assistant is temporarily unavailable. Please configure the API key to enable AI-powered assistance.')}</p>
+        <p style="color: #aaa; font-size: 13px;">{_('Other features like SOS, Location Tracking, and Help Centers continue to work normally.')}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
 
 # Initialize Chat
 if "ai_chat_session" not in st.session_state:
-    st.session_state.ai_chat_session = model.start_chat(history=[])
+    st.session_state.ai_chat_session = ai_service.start_chat()
     
 if "ai_chat_messages" not in st.session_state:
     st.session_state.ai_chat_messages = []
@@ -78,8 +87,9 @@ if st.session_state.ai_chat_messages and st.session_state.ai_chat_messages[-1]["
     
     with st.spinner(_("Thinking...")):
         try:
-            response = st.session_state.ai_chat_session.send_message(full_prompt)
-            st.session_state.ai_chat_messages.append({"role": "assistant", "content": response.text})
+            response_text = ai_service.send_message(st.session_state.ai_chat_session, full_prompt)
+            st.session_state.ai_chat_messages.append({"role": "assistant", "content": response_text})
             st.rerun()
-        except Exception as e:
-            st.error(f"{_('Error communicating with AI')}: {e}")
+        except Exception:
+            # We catch the exception (logged by ai_service) and show a clean UI message
+            st.error(_("The AI Assistant is currently experiencing high traffic or network issues. Please try again later."))

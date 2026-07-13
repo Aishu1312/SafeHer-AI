@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.session import init_session_state, login_user
-from utils.i18n import _, LANGUAGE_CODES
+from localization.manager import _, LANG_CODES
 
 st.set_page_config(page_title="SafeHer AI - Login", page_icon="🛡️", layout="centered")
 
@@ -30,7 +30,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Language Selector (Available globally)
-langs = list(LANGUAGE_CODES.keys())
+langs = list(LANG_CODES.keys())
 current_lang_idx = langs.index(st.session_state.language) if st.session_state.language in langs else 0
 
 if not st.session_state.authenticated:

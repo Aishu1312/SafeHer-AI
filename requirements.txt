@@ -11,3 +11,5 @@ streamlit-geolocation
 geopy
 edge-tts
 deep-translator
+python-dotenv
+tenacity

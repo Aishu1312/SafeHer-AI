@@ -4,7 +4,7 @@ import base64
 import random
 from styles.css import inject_custom_css
 from components.fake_call_ui import render_fake_call
-from utils.i18n import _
+from localization.manager import _
 from utils.tts import generate_tts_base64
 
 st.set_page_config(page_title=_("Fake Call") + " - SafeHer AI", page_icon="📞", layout="wide")

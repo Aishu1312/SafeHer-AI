@@ -5,7 +5,7 @@ from streamlit_geolocation import streamlit_geolocation
 from geopy.geocoders import Nominatim
 import urllib.parse
 from styles.css import inject_custom_css
-from utils.i18n import _
+from localization.manager import _
 
 st.set_page_config(page_title=_("Live Location") + " - SafeHer AI", page_icon="📍", layout="wide")
 inject_custom_css()
