@@ -31,15 +31,15 @@ if not ai_service.is_available:
     """, unsafe_allow_html=True)
     
     with st.expander(_("Configure API Key")):
-        st.markdown(_("Get your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey)"))
-        user_key = st.text_input(_("Enter your Gemini API Key"), type="password")
+        st.markdown(_("Get your free API key from [Groq Console](https://console.groq.com/keys)"))
+        user_key = st.text_input(_("Enter your Groq API Key"), type="password")
         if st.button(_("Save API Key")):
             import os
             if user_key.strip():
-                os.environ["GEMINI_API_KEY"] = user_key.strip()
+                os.environ["GROQ_API_KEY"] = user_key.strip()
                 try:
                     with open(".env", "a") as f:
-                        f.write(f"\nGEMINI_API_KEY={user_key.strip()}\n")
+                        f.write(f"\nGROQ_API_KEY={user_key.strip()}\n")
                 except:
                     pass
                 st.cache_resource.clear()
@@ -101,11 +101,14 @@ if st.session_state.ai_chat_messages and st.session_state.ai_chat_messages[-1]["
     Provide empathetic, accurate, and actionable advice related to women's safety, self-defense, legal rights, mental support, and emergency guidance.
     """
     
-    full_prompt = f"System Instruction: {system_instruction}\n\nUser: {user_msg}"
+    # Build Groq message history
+    groq_history = [{"role": "system", "content": system_instruction}]
+    for msg in st.session_state.ai_chat_messages:
+        groq_history.append({"role": msg["role"], "content": msg["content"]})
     
     with st.spinner(_("Thinking...")):
         try:
-            response_text = ai_service.send_message(st.session_state.ai_chat_session, full_prompt)
+            response_text = ai_service.send_message(groq_history)
             st.session_state.ai_chat_messages.append({"role": "assistant", "content": response_text})
             st.rerun()
         except Exception:

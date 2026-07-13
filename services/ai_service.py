@@ -1,78 +1,82 @@
 import os
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 from dotenv import load_dotenv
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 # Try to load local .env if it exists (development fallback)
 load_dotenv()
 
-def get_gemini_api_key() -> str:
+def get_groq_api_key() -> str:
     """
-    Retrieves the Gemini API Key using a fallback hierarchy:
+    Retrieves the Groq API Key using a fallback hierarchy:
     1. Streamlit Secrets (st.secrets)
     2. Environment Variable (os.getenv)
     """
     # 1. Check Streamlit secrets
     try:
-        if "GEMINI_API_KEY" in st.secrets:
-            return st.secrets["GEMINI_API_KEY"]
+        if "GROQ_API_KEY" in st.secrets:
+            return st.secrets["GROQ_API_KEY"]
     except Exception:
         pass
         
     # 2. Check environment variables (which might be populated by .env)
-    return os.getenv("GEMINI_API_KEY", "")
+    return os.getenv("GROQ_API_KEY", "")
 
 @st.cache_resource
-def _initialize_gemini(api_key: str):
+def _initialize_groq(api_key: str):
     """
-    Initializes the Gemini model. Cached to prevent multiple initializations.
+    Initializes the Groq client. Cached to prevent multiple initializations.
     """
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-1.5-pro")
+    return Groq(api_key=api_key)
 
 class AIService:
     """
-    Dedicated AI Service for interacting with Google Gemini.
+    Dedicated AI Service for interacting with Groq.
     Handles initialization, missing keys, and transient network failures.
     """
     
     def __init__(self):
-        self.api_key = get_gemini_api_key()
+        self.api_key = get_groq_api_key()
         self.is_available = bool(self.api_key and self.api_key.strip())
-        self.model = None
+        self.client = None
+        self.model = "llama3-70b-8192" # Fast and high capability
         
         if self.is_available:
             try:
-                self.model = _initialize_gemini(self.api_key)
+                self.client = _initialize_groq(self.api_key)
             except Exception as e:
-                print(f"Failed to initialize Gemini: {e}")
+                print(f"Failed to initialize Groq: {e}")
                 self.is_available = False
 
     def start_chat(self, history=None):
-        """Starts a chat session if the model is available."""
-        if not self.is_available or not self.model:
-            return None
-        return self.model.start_chat(history=history or [])
+        """Returns a dummy chat session object for UI compatibility."""
+        return "groq_chat_session"
 
     # Retry transient failures (e.g., rate limits, network timeouts)
     @retry(
         wait=wait_exponential(multiplier=1, min=2, max=10),
         stop=stop_after_attempt(3),
-        retry=retry_if_exception_type(Exception), # Catch generic exceptions from the API
+        retry=retry_if_exception_type(Exception),
         reraise=True
     )
-    def send_message(self, chat_session, prompt: str) -> str:
+    def send_message(self, message_history: list) -> str:
         """
-        Sends a message to the chat session with exponential backoff for retries.
+        Sends the entire message history to Groq and returns the response.
+        message_history should be a list of {"role": ..., "content": ...}
         """
-        if not self.is_available or not chat_session:
+        if not self.is_available or not self.client:
             raise ValueError("AI Service is not available (Missing API Key or Initialization failed).")
             
         try:
-            response = chat_session.send_message(prompt)
-            return response.text
+            # We filter out system instructions if any, or just pass them as standard messages
+            response = self.client.chat.completions.create(
+                messages=message_history,
+                model=self.model,
+                temperature=0.7,
+                max_tokens=1024
+            )
+            return response.choices[0].message.content
         except Exception as e:
-            # We log the error securely in the terminal but do not leak to the user
-            print(f"[AIService] Error calling Gemini: {e}")
+            print(f"[AIService] Error calling Groq: {e}")
             raise e

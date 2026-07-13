@@ -6,7 +6,7 @@ folium
 streamlit-folium
 Pillow
 requests
-google-generativeai
+groq
 streamlit-geolocation
 geopy
 edge-tts
