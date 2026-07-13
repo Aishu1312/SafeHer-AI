@@ -1,23 +1,22 @@
 import streamlit as st
-from config.settings import LANGUAGES
 from styles.css import inject_custom_css
+from utils.i18n import _
 import google.generativeai as genai
 
-st.set_page_config(page_title="AI Assistant - SafeHer AI", page_icon="🤖", layout="wide")
+st.set_page_config(page_title=_("AI Assistant") + " - SafeHer AI", page_icon="🤖", layout="wide")
 inject_custom_css()
 
-st.title("🤖 AI Safety Assistant")
-st.caption("Multilingual AI companion for safety advice, mental support, and emergency guidance")
+st.title(f"🤖 {_('AI Safety Assistant')}")
+st.caption(_("Multilingual AI companion for safety advice, mental support, and emergency guidance"))
 st.markdown("---")
 
-col_lang, col_warn = st.columns([1, 2])
-with col_lang:
-    selected_lang = st.selectbox("🌐 Select Language", list(LANGUAGES.values()))
+# Use global selected language
+selected_lang = st.session_state.get('language', 'English')
 
 # Configure Gemini
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 if not api_key:
-    st.error("⚠️ GEMINI_API_KEY not found in Streamlit secrets. Please add it to enable the AI Assistant.")
+    st.error(_("⚠️ GEMINI_API_KEY not found in Streamlit secrets. Please add it to enable the AI Assistant."))
     st.stop()
 
 genai.configure(api_key=api_key)
@@ -31,7 +30,7 @@ if "ai_chat_messages" not in st.session_state:
     st.session_state.ai_chat_messages = []
     
     # Add initial greeting
-    welcome_msg = f"Hello {st.session_state.user['username']}! I am your SafeHer AI Safety Assistant. How can I help you today? I can provide safety advice, legal rights info, or self-defense tips."
+    welcome_msg = _("Hello") + f" {st.session_state.user['username']}! " + _("I am your SafeHer AI Safety Assistant. How can I help you today? I can provide safety advice, legal rights info, or self-defense tips.")
     st.session_state.ai_chat_messages.append({"role": "assistant", "content": welcome_msg})
 
 st.markdown("<div class='glass-card' style='height: 500px; overflow-y: auto;'>", unsafe_allow_html=True)
@@ -50,7 +49,7 @@ for message in st.session_state.ai_chat_messages:
         st.markdown(f"""
         <div style='display: flex; justify-content: flex-start; margin-bottom: 10px;'>
             <div style='background: rgba(255, 255, 255, 0.1); padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%;'>
-                🤖 <strong>AI Assistant:</strong><br>{message["content"]}
+                🤖 <strong>{_('AI Assistant')}:</strong><br>{message["content"]}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -58,7 +57,7 @@ for message in st.session_state.ai_chat_messages:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # Chat Input
-if prompt := st.chat_input("Type your question here..."):
+if prompt := st.chat_input(_("Type your question here...")):
     # Display user message
     st.session_state.ai_chat_messages.append({"role": "user", "content": prompt})
     st.rerun()
@@ -77,10 +76,10 @@ if st.session_state.ai_chat_messages and st.session_state.ai_chat_messages[-1]["
     
     full_prompt = f"System Instruction: {system_instruction}\n\nUser: {user_msg}"
     
-    with st.spinner("Thinking..."):
+    with st.spinner(_("Thinking...")):
         try:
             response = st.session_state.ai_chat_session.send_message(full_prompt)
             st.session_state.ai_chat_messages.append({"role": "assistant", "content": response.text})
             st.rerun()
         except Exception as e:
-            st.error(f"Error communicating with AI: {e}")
+            st.error(f"{_('Error communicating with AI')}: {e}")

@@ -1,17 +1,24 @@
 import streamlit.components.v1 as components
 import base64
 
-def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
+def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str, lang_data: dict = None):
     """
     Renders a realistic full-screen smartphone fake call interface using HTML/JS/CSS.
-    It manages the entire audio and state sequence locally without triggering Streamlit reruns.
+    Supports localized strings via lang_data.
     """
+    if lang_data is None:
+        lang_data = {
+            "incoming": "Incoming Call",
+            "mobile": "Mobile",
+            "accept": "Accept",
+            "decline": "Decline",
+            "ended": "Call Ended",
+            "declined": "Call Declined"
+        }
     
-    # If no custom ringtone is provided, use a modern default ringtone.
     if not ringtone_url:
         ringtone_url = "https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg"
         
-    # We pass the base64 audio string to the frontend if available.
     voice_src = f"data:audio/mp3;base64,{voice_base64}" if voice_base64 else ""
 
     html_content = f"""
@@ -35,9 +42,9 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
             .phone-container {{
                 width: 360px;
                 height: 600px;
-                background: linear-gradient(135deg, #1f1f2e 0%, #0d0d14 100%);
+                background: linear-gradient(135deg, #111116 0%, #050508 100%);
                 border-radius: 40px;
-                border: 8px solid #2a2a35;
+                border: 10px solid #222;
                 box-shadow: 0 20px 50px rgba(0,0,0,0.8);
                 position: relative;
                 overflow: hidden;
@@ -52,77 +59,110 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
                 height: 30px;
                 display: flex;
                 justify-content: space-between;
-                padding: 10px 20px;
+                padding: 10px 25px;
                 box-sizing: border-box;
-                font-size: 12px;
-                opacity: 0.8;
+                font-size: 13px;
+                font-weight: 500;
+                opacity: 0.9;
             }}
+            .status-icons span {{ margin-left: 5px; }}
             
             /* Caller Info */
             .caller-info {{
-                margin-top: 40px;
+                margin-top: 35px;
                 text-align: center;
             }}
             .caller-status {{
                 font-size: 16px;
-                color: #aaa;
-                margin-bottom: 15px;
-                font-weight: 300;
+                color: #ccc;
+                margin-bottom: 10px;
+                font-weight: 400;
+                letter-spacing: 1px;
             }}
             .caller-name {{
-                font-size: 32px;
-                font-weight: 400;
+                font-size: 34px;
+                font-weight: 300;
                 margin: 0;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.5);
             }}
             .caller-type {{
-                font-size: 14px;
+                font-size: 15px;
                 color: #888;
-                margin-top: 5px;
+                margin-top: 8px;
             }}
             
             /* Avatar */
             .avatar-container {{
-                margin-top: 30px;
+                margin-top: 40px;
                 position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }}
             .avatar {{
-                width: 120px;
-                height: 120px;
-                background-color: #555;
+                width: 130px;
+                height: 130px;
+                background: linear-gradient(45deg, #444, #666);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 60px;
+                font-size: 65px;
                 z-index: 2;
                 position: relative;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                border: 2px solid rgba(255,255,255,0.1);
             }}
+            
+            /* Live Audio Waveform (Hidden until connected) */
+            .waveform {{
+                display: none;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                height: 40px;
+                margin-top: 20px;
+            }}
+            .bar {{
+                width: 6px;
+                height: 10px;
+                background-color: #34C759;
+                border-radius: 3px;
+                animation: wave 1s ease-in-out infinite alternate;
+            }}
+            .bar:nth-child(2) {{ animation-delay: -0.2s; }}
+            .bar:nth-child(3) {{ animation-delay: -0.4s; }}
+            .bar:nth-child(4) {{ animation-delay: -0.6s; }}
+            .bar:nth-child(5) {{ animation-delay: -0.8s; }}
+            
+            @keyframes wave {{
+                0% {{ height: 10px; opacity: 0.5; }}
+                100% {{ height: 35px; opacity: 1; }}
+            }}
+            
+            /* Ringing Ripple */
             .ripple {{
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 120px;
-                height: 120px;
-                background-color: rgba(255, 255, 255, 0.2);
+                width: 130px;
+                height: 130px;
+                background-color: rgba(255, 255, 255, 0.15);
                 border-radius: 50%;
                 z-index: 1;
-                animation: ripple-anim 2s infinite ease-out;
+                animation: ripple-anim 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
             }}
             @keyframes ripple-anim {{
-                0% {{ width: 120px; height: 120px; opacity: 1; }}
-                100% {{ width: 250px; height: 250px; opacity: 0; }}
+                0% {{ transform: scale(1); opacity: 1; }}
+                100% {{ transform: scale(2.2); opacity: 0; }}
             }}
             
             /* Actions */
             .actions-container {{
                 position: absolute;
-                bottom: 50px;
+                bottom: 60px;
                 width: 100%;
                 display: flex;
                 justify-content: space-around;
-                padding: 0 40px;
+                padding: 0 45px;
                 box-sizing: border-box;
             }}
             .action-btn {{
@@ -132,112 +172,101 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
                 cursor: pointer;
             }}
             .btn-circle {{
-                width: 70px;
-                height: 70px;
+                width: 75px;
+                height: 75px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 30px;
+                font-size: 32px;
                 color: white;
                 border: none;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.4);
                 transition: transform 0.2s;
             }}
             .btn-circle:hover {{
                 transform: scale(1.05);
             }}
             .btn-decline {{ background-color: #FF3B30; }}
-            .btn-accept {{ background-color: #34C759; animation: bounce 2s infinite; }}
+            .btn-accept {{ 
+                background-color: #34C759; 
+                animation: pulse 2s infinite; 
+                box-shadow: 0 0 15px rgba(52,199,89,0.5);
+            }}
             
-            @keyframes bounce {{
-                0%, 20%, 50%, 80%, 100% {{ transform: translateY(0); }}
-                40% {{ transform: translateY(-10px); }}
-                60% {{ transform: translateY(-5px); }}
+            @keyframes pulse {{
+                0% {{ transform: scale(1); box-shadow: 0 0 15px rgba(52,199,89,0.5); }}
+                50% {{ transform: scale(1.05); box-shadow: 0 0 25px rgba(52,199,89,0.8); }}
+                100% {{ transform: scale(1); box-shadow: 0 0 15px rgba(52,199,89,0.5); }}
             }}
             
             .btn-label {{
-                margin-top: 10px;
-                font-size: 14px;
-                color: #ccc;
+                margin-top: 12px;
+                font-size: 15px;
+                color: #ddd;
+                font-weight: 400;
             }}
             
             /* Timer */
             .timer {{
-                font-size: 18px;
+                font-size: 20px;
                 color: #34C759;
                 margin-top: 15px;
                 display: none;
+                font-variant-numeric: tabular-nums;
             }}
             
-            /* In-Call Controls */
-            .incall-controls {{
+            /* Blur overlay for background */
+            .blur-bg {{
                 position: absolute;
-                bottom: 160px;
-                width: 100%;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-evenly;
-                gap: 20px;
-                display: none;
-                padding: 0 30px;
-                box-sizing: border-box;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: radial-gradient(circle at center, rgba(52,199,89,0.1) 0%, rgba(0,0,0,0) 70%);
+                z-index: 0;
             }}
-            .incall-btn {{
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.15);
-                border: none;
-                color: white;
-                font-size: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }}
+            
+            .content-z {{ z-index: 10; position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }}
+            
         </style>
     </head>
     <body>
         <div class="phone-container" id="phone">
-            <div class="status-bar">
-                <span>12:00</span>
-                <span>LTE 🔋</span>
-            </div>
-            
-            <div class="caller-info">
-                <div class="caller-status" id="status-text">Incoming Call</div>
-                <h1 class="caller-name">{caller_name}</h1>
-                <div class="caller-type" id="caller-type">Mobile</div>
-                <div class="timer" id="timer">00:00</div>
-            </div>
-            
-            <div class="avatar-container" id="avatar-container">
-                <div class="ripple" id="ripple"></div>
-                <div class="avatar">👤</div>
-            </div>
-            
-            <div class="incall-controls" id="incall-controls">
-                <button class="incall-btn">🔇</button>
-                <button class="incall-btn">⏺️</button>
-                <button class="incall-btn">🔈</button>
-                <button class="incall-btn">⏸️</button>
-            </div>
-            
-            <div class="actions-container" id="actions">
-                <div class="action-btn" onclick="declineCall()" id="btn-decline">
-                    <button class="btn-circle btn-decline">☎️</button>
-                    <div class="btn-label">Decline</div>
+            <div class="blur-bg"></div>
+            <div class="content-z">
+                <div class="status-bar">
+                    <span id="clock">12:00</span>
+                    <span class="status-icons">📶 LTE 🔋</span>
                 </div>
-                <div class="action-btn" onclick="acceptCall()" id="btn-accept">
-                    <button class="btn-circle btn-accept">📞</button>
-                    <div class="btn-label">Accept</div>
+                
+                <div class="caller-info">
+                    <div class="caller-status" id="status-text">{lang_data['incoming']}</div>
+                    <h1 class="caller-name">{caller_name}</h1>
+                    <div class="caller-type" id="caller-type">{lang_data['mobile']}</div>
+                    <div class="timer" id="timer">00:00</div>
+                    <div class="waveform" id="waveform">
+                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- End Call Container (Hidden initially) -->
-            <div class="actions-container" id="end-action" style="display: none; justify-content: center;">
-                <div class="action-btn" onclick="endCall()">
-                    <button class="btn-circle btn-decline">☎️</button>
+                
+                <div class="avatar-container" id="avatar-container">
+                    <div class="ripple" id="ripple"></div>
+                    <div class="avatar">👤</div>
+                </div>
+                
+                <div class="actions-container" id="actions">
+                    <div class="action-btn" onclick="declineCall()" id="btn-decline">
+                        <button class="btn-circle btn-decline">☎️</button>
+                        <div class="btn-label">{lang_data['decline']}</div>
+                    </div>
+                    <div class="action-btn" onclick="acceptCall()" id="btn-accept">
+                        <button class="btn-circle btn-accept">📞</button>
+                        <div class="btn-label">{lang_data['accept']}</div>
+                    </div>
+                </div>
+                
+                <div class="actions-container" id="end-action" style="display: none; justify-content: center;">
+                    <div class="action-btn" onclick="endCall()">
+                        <button class="btn-circle btn-decline" style="width:85px; height:85px; font-size:38px;">☎️</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -252,21 +281,30 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
         </audio>
 
         <script>
+            // Set live clock
+            setInterval(() => {{
+                let d = new Date();
+                document.getElementById('clock').innerText = 
+                    (d.getHours()%12 || 12) + ":" + (d.getMinutes()<10?'0':'') + d.getMinutes();
+            }}, 1000);
+
             let ringtone = document.getElementById("ringtone");
             let voiceMsg = document.getElementById("voice-message");
             let timerInterval;
             let ringtoneInterval;
             let seconds = 0;
             
-            // Start ringtone immediately 
-            ringtone.play().catch(e => console.log("Autoplay blocked, waiting for interaction"));
+            ringtone.play().catch(e => console.log("Autoplay blocked"));
             
-            // Create a natural pause loop for the ringtone
             ringtone.addEventListener('ended', function() {{
-                // When audio ends, wait 2 seconds before playing again to simulate real phone ring
                 ringtoneInterval = setTimeout(() => {{
                     ringtone.play().catch(e => {{}});
                 }}, 2000);
+            }});
+
+            // When voice message finishes, stop waveform
+            voiceMsg.addEventListener('ended', function() {{
+                document.getElementById("waveform").style.display = "none";
             }});
 
             function formatTime(sec) {{
@@ -280,8 +318,7 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
                 ringtone.pause();
                 ringtone.currentTime = 0;
                 
-                document.getElementById("btn-decline").style.display = "none";
-                document.getElementById("btn-accept").style.display = "none";
+                document.getElementById("actions").style.display = "none";
                 document.getElementById("end-action").style.display = "flex";
                 
                 document.getElementById("status-text").style.display = "none";
@@ -291,28 +328,27 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
                 let timerEl = document.getElementById("timer");
                 timerEl.style.display = "block";
                 
-                document.getElementById("incall-controls").style.display = "flex";
-                document.getElementById("avatar-container").style.transform = "scale(0.8)";
-                document.getElementById("avatar-container").style.transition = "transform 0.5s ease";
+                document.getElementById("avatar-container").style.transform = "scale(0.85)";
+                document.getElementById("avatar-container").style.transition = "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)";
+                document.getElementById("avatar-container").style.marginTop = "20px";
 
-                // Start Timer
                 timerInterval = setInterval(() => {{
                     seconds++;
                     timerEl.innerText = formatTime(seconds);
                 }}, 1000);
                 
-                // Play Voice Message
                 if ("{voice_src}" !== "") {{
                     voiceMsg.play();
+                    document.getElementById("waveform").style.display = "flex";
                 }}
             }}
 
             function declineCall() {{
-                endCallLogic("Call Declined");
+                endCallLogic("{lang_data['declined']}");
             }}
 
             function endCall() {{
-                endCallLogic("Call Ended");
+                endCallLogic("{lang_data['ended']}");
             }}
             
             function endCallLogic(msg) {{
@@ -322,15 +358,17 @@ def render_fake_call(caller_name: str, voice_base64: str, ringtone_url: str):
                 clearInterval(timerInterval);
                 
                 document.getElementById("timer").style.display = "none";
+                document.getElementById("waveform").style.display = "none";
                 document.getElementById("status-text").innerText = msg;
                 document.getElementById("status-text").style.display = "block";
+                document.getElementById("status-text").style.color = "#FF3B30";
                 
                 document.getElementById("actions").style.display = "none";
                 document.getElementById("end-action").style.display = "none";
-                document.getElementById("incall-controls").style.display = "none";
                 document.getElementById("ripple").style.display = "none";
                 
-                document.getElementById("phone").style.opacity = "0.5";
+                document.getElementById("phone").style.opacity = "0.7";
+                document.getElementById("phone").style.filter = "grayscale(100%)";
             }}
         </script>
     </body>

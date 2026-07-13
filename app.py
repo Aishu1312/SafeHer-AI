@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.session import init_session_state, login_user
+from utils.i18n import _, LANGUAGE_CODES
 
 st.set_page_config(page_title="SafeHer AI - Login", page_icon="🛡️", layout="centered")
 
@@ -28,87 +29,91 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Language Selector (Available globally)
+langs = list(LANGUAGE_CODES.keys())
+current_lang_idx = langs.index(st.session_state.language) if st.session_state.language in langs else 0
+
 if not st.session_state.authenticated:
-    st.markdown("<h1 style='text-align: center; color: #E91E8C;'>🛡️ SafeHer AI</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Your Intelligent Personal Safety Companion</p>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='text-align: center; color: #E91E8C;'>🛡️ {_('SafeHer AI')}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center;'>{_('Your Intelligent Personal Safety Companion')}</p>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["Login", "Register"])
+    st.selectbox(_("Select Language"), langs, index=current_lang_idx, key="lang_selector", on_change=lambda: st.session_state.update(language=st.session_state.lang_selector))
+    
+    tab1, tab2 = st.tabs([_("Login"), _("Register")])
     
     with tab1:
-        st.subheader("Welcome Back")
-        username = st.text_input("Username", value="Priya Sharma")
-        password = st.text_input("Password", type="password", value="password123")
+        st.subheader(_("Welcome Back"))
+        username = st.text_input(_("Username"), value="Priya Sharma")
+        password = st.text_input(_("Password"), type="password", value="password123")
         
-        if st.button("Login", key="login_btn"):
+        if st.button(_("Login"), key="login_btn"):
             if username and password:
-                # In a real app, validate against a database
                 login_user(
                     username=username,
                     email="priya.sharma@email.com",
                     mobile="+91-98765-43210",
                     blood_group="B+"
                 )
-                st.success("Login successful!")
+                st.success(_("Login successful!"))
                 st.rerun()
             else:
-                st.error("Please enter both username and password")
+                st.error(_("Please enter both username and password"))
                 
     with tab2:
-        st.subheader("Create an Account")
-        new_username = st.text_input("Full Name")
-        new_email = st.text_input("Email")
-        new_mobile = st.text_input("Mobile Number")
-        new_bg = st.selectbox("Blood Group (Optional)", ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Not specified"])
-        new_password = st.text_input("Create Password", type="password")
+        st.subheader(_("Create an Account"))
+        new_username = st.text_input(_("Full Name"))
+        new_email = st.text_input(_("Email"))
+        new_mobile = st.text_input(_("Mobile Number"))
+        new_bg = st.selectbox(_("Blood Group (Optional)"), ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", _("Not specified")])
+        new_password = st.text_input(_("Create Password"), type="password")
         
-        if st.button("Register", key="register_btn"):
+        if st.button(_("Register"), key="register_btn"):
             if new_username and new_email and new_mobile and new_password:
                 login_user(
                     username=new_username,
                     email=new_email,
                     mobile=new_mobile,
-                    blood_group=new_bg if new_bg != "Not specified" else ""
+                    blood_group=new_bg if new_bg != _("Not specified") else ""
                 )
-                st.success("Registration successful!")
+                st.success(_("Registration successful!"))
                 st.rerun()
             else:
-                st.error("Please fill in all required fields.")
+                st.error(_("Please fill in all required fields."))
 else:
     # Use st.navigation for multipage layout when authenticated
     pages = {
-        "Dashboard": [
-            st.Page("pages/1_dashboard.py", title="Dashboard", icon="🏠"),
+        _("Dashboard"): [
+            st.Page("pages/1_dashboard.py", title=_("Dashboard"), icon="🏠"),
         ],
-        "Safety Tools": [
-            st.Page("pages/2_sos.py", title="SOS Emergency", icon="🚨"),
-            st.Page("pages/3_location.py", title="Live Location", icon="📍"),
-            st.Page("pages/4_fake_call.py", title="Fake Call", icon="📞"),
+        _("Safety Tools"): [
+            st.Page("pages/2_sos.py", title=_("SOS Emergency"), icon="🚨"),
+            st.Page("pages/3_location.py", title=_("Live Location"), icon="📍"),
+            st.Page("pages/4_fake_call.py", title=_("Fake Call"), icon="📞"),
         ],
-        "Resources": [
-            st.Page("pages/5_help_centers.py", title="Help Centers", icon="🏥"),
-            st.Page("pages/6_ai_assistant.py", title="AI Assistant", icon="🤖"),
+        _("Resources"): [
+            st.Page("pages/5_help_centers.py", title=_("Help Centers"), icon="🏥"),
+            st.Page("pages/6_ai_assistant.py", title=_("AI Assistant"), icon="🤖"),
         ],
-        "Settings": [
-            st.Page("pages/7_profile.py", title="Profile", icon="👤"),
+        _("Settings"): [
+            st.Page("pages/7_profile.py", title=_("Profile"), icon="👤"),
         ]
     }
     
     pg = st.navigation(pages)
     
     # Global sidebar elements for authenticated users
-    st.sidebar.title("🛡️ SafeHer AI")
+    st.sidebar.title(f"🛡️ {_('SafeHer AI')}")
+    st.sidebar.selectbox(_("Select Language"), langs, index=current_lang_idx, key="lang_selector_auth", on_change=lambda: st.session_state.update(language=st.session_state.lang_selector_auth))
     st.sidebar.markdown("---")
-    st.sidebar.info(f"👤 **Logged in as:**\n{st.session_state.user['username']}")
+    st.sidebar.info(f"👤 **{_('Logged in as')}:**\n{st.session_state.user['username']}")
     
     # Global SOS button in sidebar
-    if st.sidebar.button("🚨 QUICK SOS", type="primary", use_container_width=True):
+    if st.sidebar.button(f"🚨 {_('QUICK SOS')}", type="primary", use_container_width=True):
         st.session_state.sos_active = True
-        # Let the SOS page handle the actual emergency action if it's open, 
-        # but better yet we can switch to SOS page. Streamlit st.switch_page
         st.switch_page("pages/2_sos.py")
         
     st.sidebar.markdown("---")
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button(_("Logout")):
         from utils.session import logout_user
         logout_user()
         st.rerun()

@@ -20,6 +20,9 @@ def init_session_state():
         
     if "sos_active" not in st.session_state:
         st.session_state.sos_active = False
+        
+    if "language" not in st.session_state:
+        st.session_state.language = "English"
 
 def login_user(username, email, mobile, blood_group):
     """Logs in the user and populates session state."""

@@ -9,3 +9,5 @@ requests
 google-generativeai
 streamlit-geolocation
 geopy
+edge-tts
+deep-translator
