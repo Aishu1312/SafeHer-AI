@@ -23,12 +23,30 @@ ai_service = get_ai_service()
 # Graceful degradation if API key is missing
 if not ai_service.is_available:
     st.markdown(f"""
-    <div class="glass-card" style="border-left: 5px solid #FF9800; padding: 20px;">
+    <div class="glass-card" style="border-left: 5px solid #FF9800; padding: 20px; margin-bottom: 20px;">
         <h3 style="color: #FF9800; margin-top: 0;">⚠️ {_('AI Assistant Unavailable')}</h3>
         <p>{_('The AI Assistant is temporarily unavailable. Please configure the API key to enable AI-powered assistance.')}</p>
         <p style="color: #aaa; font-size: 13px;">{_('Other features like SOS, Location Tracking, and Help Centers continue to work normally.')}</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    with st.expander(_("Configure API Key")):
+        st.markdown(_("Get your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey)"))
+        user_key = st.text_input(_("Enter your Gemini API Key"), type="password")
+        if st.button(_("Save API Key")):
+            import os
+            if user_key.strip():
+                os.environ["GEMINI_API_KEY"] = user_key.strip()
+                try:
+                    with open(".env", "a") as f:
+                        f.write(f"\nGEMINI_API_KEY={user_key.strip()}\n")
+                except:
+                    pass
+                st.cache_resource.clear()
+                st.rerun()
+            else:
+                st.error(_("Please enter a valid API key."))
+    
     st.stop()
 
 # Initialize Chat
